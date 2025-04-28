@@ -1,0 +1,163 @@
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useWeather } from '../context/WeatherContext';
+import { MovableBackground } from './MovableBackground';
+import { MoonIcon, SunIcon, WeatherIcon } from './WeatherIcons';
+
+const Layout = ({ children }) => {
+  const { currentWeather } = useWeather() || {};
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('weatherDarkMode');
+    return saved ? JSON.parse(saved) : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('weatherDarkMode', JSON.stringify(darkMode));
+    if (darkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
+  };
+
+  // Get weather condition for background
+  const getWeatherCondition = () => {
+    if (!currentWeather || !currentWeather.weather) return 'clear';
+    
+    const mainCondition = currentWeather.weather[0].main.toLowerCase();
+    
+    if (mainCondition.includes('cloud')) return 'clouds';
+    if (mainCondition.includes('rain') || mainCondition.includes('drizzle')) return 'rain';
+    if (mainCondition.includes('snow')) return 'snow';
+    return 'clear';
+  };
+
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      transition: 'background-color 0.3s ease',
+      position: 'relative',
+      zIndex: 0
+    }}>
+      {/* Movable Animated Background */}
+      <MovableBackground condition={getWeatherCondition()} darkMode={darkMode} />
+      
+      <header style={{ 
+        backdropFilter: 'blur(10px)',
+        backgroundColor: darkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div className="container flex justify-between items-center" style={{ padding: '1rem' }}>
+          <motion.div 
+            className="flex items-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div 
+              style={{ 
+                marginRight: '0.75rem',
+                color: 'var(--color-primary)'
+              }}
+              animate={{ 
+                rotate: [0, 5, -5, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 5, 
+                repeat: Infinity,
+                repeatType: 'reverse'
+              }}
+            >
+              <WeatherIcon size={32} />
+            </motion.div>
+            <motion.h1 
+              className="text-xl font-bold" 
+              style={{ 
+                fontSize: '1.5rem', 
+                background: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+              animate={{ 
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+              }}
+              transition={{ 
+                duration: 10, 
+                repeat: Infinity,
+                ease: 'linear'
+              }}
+            >
+              Weather App
+            </motion.h1>
+          </motion.div>
+          
+          <motion.button 
+            onClick={toggleDarkMode}
+            style={{ 
+              padding: '0.5rem', 
+              borderRadius: '9999px',
+              backgroundColor: darkMode ? '#374151' : '#e5e7eb',
+              color: darkMode ? 'var(--color-white)' : 'var(--color-gray-dark)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            whileHover={{ 
+              scale: 1.1,
+              rotate: darkMode ? [0, 15] : [0, -15],
+              transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <SunIcon size={20} />
+            ) : (
+              <MoonIcon size={20} />
+            )}
+          </motion.button>
+        </div>
+      </header>
+      
+      <main className="container" style={{ 
+        padding: '2rem 1rem',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        {children}
+      </main>
+      
+      <footer style={{ 
+        backdropFilter: 'blur(10px)',
+        backgroundColor: darkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 -4px 6px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div className="container text-center" style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--color-gray)' }}>
+          <p>Weather data provided by <a 
+            href="https://openweathermap.org/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ 
+              color: 'var(--color-primary)',
+              textDecoration: 'none',
+              borderBottom: '1px dotted var(--color-primary)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.borderBottom = '1px solid var(--color-primary)'}
+            onMouseOut={(e) => e.currentTarget.style.borderBottom = '1px dotted var(--color-primary)'}
+          >OpenWeatherMap</a></p>
+          <p style={{ marginTop: '0.25rem' }}>© {new Date().getFullYear()} Weather App</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Layout;
