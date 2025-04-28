@@ -37,8 +37,8 @@ const WeatherMap = () => {
   const { coord } = currentWeather;
   const { lat, lon } = coord;
 
-  // Use hardcoded API key for development
-  const API_KEY = 'ca1ab2713e115f0f0cd6fa248e465b8c';
+  // Get API key from environment variables
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
   const mapTypes = [
     { id: 'temp_new', name: 'Temperature' },

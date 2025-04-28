@@ -1,6 +1,11 @@
-// Using hardcoded API key for development
-const API_KEY = 'ca1ab2713e115f0f0cd6fa248e465b8c';
+// Get API key from environment variables
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+// Check if API key is available
+if (!API_KEY) {
+  console.error('OpenWeatherMap API key is missing! Please check your .env file.');
+}
 
 /**
  * Helper function to handle API requests with better error handling
@@ -9,8 +14,13 @@ const BASE_URL = 'https://api.openweathermap.org/data/2.5';
  * @returns {Promise<Object>} - JSON response
  */
 const fetchWithErrorHandling = async (url, errorMessage) => {
+  // Check if API key is available before making the request
+  if (!API_KEY) {
+    throw new Error('OpenWeatherMap API key is missing. Please check your environment variables.');
+  }
+
   try {
-    console.log(`Fetching: ${url}`);
+    console.log(`Fetching: ${url.replace(API_KEY, 'API_KEY_HIDDEN')}`); // Log URL without exposing API key
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -37,7 +47,7 @@ const fetchWithErrorHandling = async (url, errorMessage) => {
       if (response.status === 404) {
         throw new Error('Location not found. Please check the city name and try again.');
       } else if (response.status === 401) {
-        throw new Error('API key is invalid or expired.');
+        throw new Error('API key is invalid or expired. Please check your API key in the .env file.');
       } else if (response.status === 429) {
         throw new Error('Too many requests. Please try again later.');
       } else {
